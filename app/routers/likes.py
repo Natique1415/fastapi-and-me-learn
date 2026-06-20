@@ -4,7 +4,7 @@ from app.schemas import PayloadData
 from app.db_util import DB_PATH, does_id_exist
 import sqlite3
 
-router = APIRouter(prefix="/like", tags=["Like"])
+router = APIRouter(prefix="/likes", tags=["Like"])
 
 
 @router.post("/{post_id}", status_code=201)
