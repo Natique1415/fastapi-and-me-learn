@@ -52,6 +52,7 @@ class Post(PostBase):
     created_at: datetime = Field(
         ..., description="Timestamp ( without timezone information )"
     )
+    no_of_likes: int
 
 
 class UpdatePost(BaseModel):

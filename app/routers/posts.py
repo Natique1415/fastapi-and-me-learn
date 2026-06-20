@@ -59,6 +59,7 @@ def get_latest_post():
         content=posts[0]["content"],
         is_published=True if posts[0]["is_published"] == 1 else False,
         created_at=posts[0]["created_at"],
+        no_of_likes=posts[0]["no_of_likes"],
     )
 
 
@@ -83,6 +84,7 @@ def get_post(post_id: int):
         content=posts[0]["content"],
         is_published=True if posts[0]["is_published"] == 1 else False,
         created_at=posts[0]["created_at"],
+        no_of_likes=posts[0]["no_of_likes"],
     )
 
 
@@ -115,6 +117,7 @@ def create_posts(
             content=added_post[0]["content"],
             is_published=True if added_post[0]["is_published"] == 1 else False,
             created_at=added_post[0]["created_at"],
+            no_of_likes=added_post[0]["no_of_likes"],
         )
 
     except sqlite3.IntegrityError:
@@ -192,4 +195,5 @@ def update_post(
                 content=result[0]["content"],
                 is_published=True if result[0]["is_published"] == 1 else False,
                 created_at=result[0]["created_at"],
+                no_of_likes=result[0]["no_of_likes"],
             )
