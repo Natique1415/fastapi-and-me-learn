@@ -1,10 +1,11 @@
 import sqlite3
 import os
+from app.config import settings
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # this path to the db is relative to this file
-DB_PATH = os.path.join(BASE_DIR, "todo.db")
+DB_PATH = os.path.join(BASE_DIR, settings.db_name)
 
 
 # todo: parameter table_name and db_path
