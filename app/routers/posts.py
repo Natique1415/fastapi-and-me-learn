@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import HTTPException, APIRouter, Depends
 from app.schemas import PostBase, UpdatePost, Post
 from app.db_util import DB_PATH, does_id_exist, get_db
@@ -10,7 +12,7 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 
 
 # return all posts
-@router.get("/")  # response_model=List[Post])
+@router.get("/", status_code=200, response_model=List[Post])
 def get_posts(
     limit: int = 10,
     skip: int = 0,
@@ -36,8 +38,23 @@ def get_posts(
             ),
         )
     posts = cursor.fetchall()
+
+    # find a better way of doing this
+    all_posts = []
+    for post in posts:
+        all_posts.append(
+            Post(
+                user_id=posts[0]["user_id"],
+                post_id=posts[0]["id"],
+                title=posts[0]["title"],
+                content=posts[0]["content"],
+                is_published=True if posts[0]["is_published"] == 1 else False,
+                created_at=posts[0]["created_at"],
+                no_of_likes=posts[0]["no_of_likes"],
+            )
+        )
     # todo create a list and loop through and create the post ( pydantic model ) and return it
-    return posts
+    return all_posts
 
 
 @router.get("/latest", status_code=200, response_model=Post)
