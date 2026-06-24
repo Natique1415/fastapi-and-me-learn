@@ -1,7 +1,7 @@
-from fastapi import HTTPException, APIRouter
+from fastapi import HTTPException, APIRouter, Depends
 from app.schemas import UserSignup, UserOut
 from app.security import hash_password
-from app.db_util import DB_PATH
+from app.db_util import DB_PATH, get_db
 import sqlite3
 
 
@@ -11,8 +11,10 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 # create a new user
 @router.post("/", status_code=201, response_model=UserOut)
-def create_user(user: UserSignup):
-    connection = sqlite3.connect(DB_PATH)
+def create_user(
+    user: UserSignup,
+    connection: sqlite3.Connection = Depends(get_db),
+):
     cursor = connection.cursor()
 
     try:
@@ -26,5 +28,3 @@ def create_user(user: UserSignup):
     # the only integrity error would be the email uniqueness
     except sqlite3.IntegrityError:
         raise HTTPException(status_code=409, detail="Given Email is already in use")
-    finally:
-        connection.close()
