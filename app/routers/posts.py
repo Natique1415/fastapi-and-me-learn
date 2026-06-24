@@ -1,7 +1,6 @@
 from fastapi import HTTPException, APIRouter, Depends
 from app.schemas import PostBase, UpdatePost, Post
-from app.db_util import does_id_exist
-from app.db_util import DB_PATH
+from app.db_util import DB_PATH, does_id_exist, get_db
 from app.schemas import PayloadData
 import app.oauth2
 import sqlite3
@@ -12,11 +11,12 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 
 # return all posts
 @router.get("/")  # response_model=List[Post])
-def get_posts(limit: int = 10, skip: int = 0, search_title: str = "",):
-    connection = sqlite3.connect(DB_PATH)
-    connection.row_factory = (
-        sqlite3.Row
-    )  # returns the key ( being the column name ) and value being the value
+def get_posts(
+    limit: int = 10,
+    skip: int = 0,
+    search_title: str = "",
+    connection: sqlite3.Connection = Depends(get_db),
+):
     cursor = connection.cursor()
     if search_title != "":
         cursor.execute(
@@ -37,21 +37,16 @@ def get_posts(limit: int = 10, skip: int = 0, search_title: str = "",):
         )
     posts = cursor.fetchall()
     # todo create a list and loop through and create the post ( pydantic model ) and return it
-    connection.close()
     return posts
 
 
 @router.get("/latest", status_code=200, response_model=Post)
-def get_latest_post():
-    connection = sqlite3.connect(DB_PATH)
-    connection.row_factory = sqlite3.Row
+def get_latest_post(connection: sqlite3.Connection = Depends(get_db)):
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM posts ORDER BY id DESC LIMIT 1")
     posts = cursor.fetchall()
-    connection.close()
     if posts == []:
         raise HTTPException(status_code=404, detail="No Posts to Begin with")
-
     return Post(
         user_id=posts[0]["user_id"],
         post_id=posts[0]["id"],
@@ -64,14 +59,13 @@ def get_latest_post():
 
 
 @router.get("/{post_id}", status_code=200, response_model=Post)
-def get_post(post_id: int):
-
-    connection = sqlite3.connect(DB_PATH)
-    connection.row_factory = sqlite3.Row
+def get_post(
+    post_id: int,
+    connection: sqlite3.Connection = Depends(get_db),
+):
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
     posts = cursor.fetchall()
-    connection.close()
     if posts == []:
         raise HTTPException(
             status_code=404, detail=f"Given Post Id = {post_id} Does not exist"
@@ -92,15 +86,10 @@ def get_post(post_id: int):
 def create_posts(
     post: PostBase,
     current_user: PayloadData = Depends(app.oauth2.get_current_user_id),
+    connection: sqlite3.Connection = Depends(get_db),
 ):
-    connection = sqlite3.connect(DB_PATH)
-    connection.row_factory = (
-        sqlite3.Row
-    )  # returns the key ( being the column name ) and value being the value
     cursor = connection.cursor()
 
-    # so sqlite3 by default has no protection on fk, this is how we turn it out, lasts as long as the connection does
-    cursor.execute("PRAGMA foreign_keys = ON;")
     # so if the user added a non-existent user_id post we will get error which we have to handle ( todo )
     try:
         cursor.execute(
@@ -122,36 +111,32 @@ def create_posts(
 
     except sqlite3.IntegrityError:
         raise HTTPException(status_code=409, detail="Given user_id does not exist!")
-    finally:
-        connection.close()
 
 
 @router.delete("/{post_id}", status_code=204)
 def delete_post(
-    post_id: int, current_user: PayloadData = Depends(app.oauth2.get_current_user_id)
+    post_id: int,
+    current_user: PayloadData = Depends(app.oauth2.get_current_user_id),
+    connection: sqlite3.Connection = Depends(get_db),
 ):
-    connection = sqlite3.connect(DB_PATH)
-    connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     cursor.execute("SELECT user_id FROM posts WHERE id = ?", (post_id,))
     result = cursor.fetchone()
     if result is None:
-        connection.close()
         raise HTTPException(status_code=404, detail="Post with Given Id Does not Exist")
 
     if current_user.id != result["user_id"]:
-        connection.close()
         raise HTTPException(status_code=403, detail="You cannot delete others post!")
     else:
         cursor.execute("DELETE FROM posts where id=?", (post_id,))
         connection.commit()
-        connection.close()
 
 
 @router.put("/{post_id}", status_code=200, response_model=Post)
 def update_post(
     post_id: int,
     updated_post: UpdatePost,
+    connection: sqlite3.Connection = Depends(get_db),
     current_user: PayloadData = Depends(app.oauth2.get_current_user_id),
 ):
     if does_id_exist(post_id, "posts", DB_PATH) == False:  # noqa: E712
@@ -159,14 +144,11 @@ def update_post(
             status_code=404, detail=f"Post with post_id = {post_id} does not exist"
         )
     else:
-        connection = sqlite3.connect(DB_PATH)
-        connection.row_factory = sqlite3.Row
         curr = connection.cursor()
         curr.execute("SELECT user_id FROM posts WHERE id = ?", (post_id,))
         result = curr.fetchone()
 
         if current_user.id != result["user_id"]:
-            connection.close()
             raise HTTPException(
                 status_code=403, detail="You cannot update others post!"
             )
@@ -187,7 +169,6 @@ def update_post(
 
             curr.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
             result = curr.fetchall()
-            connection.close()
             return Post(
                 user_id=result[0]["user_id"],
                 post_id=result[0]["id"],

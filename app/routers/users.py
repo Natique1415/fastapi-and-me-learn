@@ -1,7 +1,7 @@
 from fastapi import HTTPException, APIRouter, Depends
 from app.schemas import UserSignup, UserOut
 from app.security import hash_password
-from app.db_util import DB_PATH, get_db
+from app.db_util import get_db
 import sqlite3
 
 
