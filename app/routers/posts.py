@@ -12,7 +12,7 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 
 # return all posts
 @router.get("/")  # response_model=List[Post])
-def get_posts(limit: int = 10, skip: int = 0, search_title: str = ""):
+def get_posts(limit: int = 10, skip: int = 0, search_title: str = "",):
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = (
         sqlite3.Row

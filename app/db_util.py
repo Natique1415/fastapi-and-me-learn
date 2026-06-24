@@ -8,6 +8,18 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, settings.db_name)
 
 
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+
+    try:
+        yield conn
+
+    finally:
+        conn.close()
+
+
 # todo: parameter table_name and db_path
 def does_id_exist(id: int, table_name: str, DB_PATH: str) -> bool:
     connection = sqlite3.connect(DB_PATH)
