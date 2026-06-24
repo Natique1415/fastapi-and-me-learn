@@ -1,8 +1,8 @@
-from fastapi import HTTPException, APIRouter
+from fastapi import HTTPException, APIRouter, Depends
 from app.security import verify_password
 from app.schemas import UserLogin, Token
 from app.oauth2 import create_access_token
-from app.db_util import get_id, DB_PATH
+from app.db_util import get_id, DB_PATH, get_db
 import sqlite3
 
 # in the docs given by fastapi we can category endpoints via tags
@@ -11,8 +11,7 @@ router = APIRouter(prefix="/login", tags=["Authentication"])
 
 # create a new user
 @router.post("/", status_code=200, response_model=Token)
-def login(user_credential: UserLogin):
-    connection = sqlite3.connect(DB_PATH)
+def login(user_credential: UserLogin, connection: sqlite3.Connection = Depends(get_db)):
     cursor = connection.cursor()
 
     cursor.execute(
@@ -20,7 +19,6 @@ def login(user_credential: UserLogin):
     )
 
     result = cursor.fetchone()
-    connection.close()
 
     # meaning that mail doesn't exist in the db
     if result is None:
