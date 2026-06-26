@@ -1,3 +1,5 @@
 __pycache__/
 venv/
 .env
+todo.db
+test_todo.db
