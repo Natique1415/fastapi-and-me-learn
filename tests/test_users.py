@@ -1,5 +1,4 @@
 from fastapi.testclient import TestClient
-from fastapi import Depends
 import os
 import sqlite3
 import pytest
@@ -32,12 +31,15 @@ app.dependency_overrides[get_db] = override_get_db
 
 
 @pytest.fixture
-def client(connection: sqlite3.Connection = Depends(override_get_db)):
-    curr = connection.cursor()
-    curr.execute("DELETE FROM users")
+def client():
     yield TestClient(app)
+    # find a better way as this is more a hack
+    conn = sqlite3.connect(TEST_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    curr = conn.cursor()
     curr.execute("DELETE FROM users")
-    connection.commit()
+    conn.commit()
 
 
 def test_create_user(client):
