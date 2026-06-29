@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import HTTPException, APIRouter, Depends
 from app.schemas import PostBase, UpdatePost, Post
 from app.db_util import DB_PATH, does_id_exist, get_db
