@@ -44,13 +44,13 @@ def get_posts(
     for post in posts:
         all_posts.append(
             Post(
-                user_id=posts[0]["user_id"],
-                post_id=posts[0]["id"],
-                title=posts[0]["title"],
-                content=posts[0]["content"],
-                is_published=True if posts[0]["is_published"] == 1 else False,
-                created_at=posts[0]["created_at"],
-                no_of_likes=posts[0]["no_of_likes"],
+                user_id=post[0]["user_id"],
+                post_id=post[0]["id"],
+                title=post[0]["title"],
+                content=post[0]["content"],
+                is_published=True if post[0]["is_published"] == 1 else False,
+                created_at=post[0]["created_at"],
+                no_of_likes=post[0]["no_of_likes"],
             )
         )
     # todo create a list and loop through and create the post ( pydantic model ) and return it
