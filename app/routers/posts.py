@@ -12,7 +12,7 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 
 
 # return all posts
-@router.get("/", status_code=200, response_model=List[Post])
+@router.get("/", status_code=200)  # response_model=List[Post])
 def get_posts(
     limit: int = 10,
     skip: int = 0,
@@ -38,8 +38,7 @@ def get_posts(
             ),
         )
     posts = cursor.fetchall()
-
-    # find a better way of doing this
+    """
     all_posts = []
     for post in posts:
         all_posts.append(
@@ -53,8 +52,8 @@ def get_posts(
                 no_of_likes=post[0]["no_of_likes"],
             )
         )
-    # todo create a list and loop through and create the post ( pydantic model ) and return it
-    return all_posts
+    """
+    return posts
 
 
 @router.get("/latest", status_code=200, response_model=Post)
