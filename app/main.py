@@ -25,4 +25,4 @@ app.include_router(likes.router)
 
 @app.get("/", status_code=200)
 def root():
-    return {"mssg": "Hello World!"}
+    return {"mssg": "Hello World x3"}

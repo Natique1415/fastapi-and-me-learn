@@ -5,5 +5,8 @@ services:
       # <port on localhost>:<port on container, can figure out from Dockerfile>
       - "8000:8000"
 
+    volumes:
+      - ./:/app:ro
+
     env_file:
       - ./.env
