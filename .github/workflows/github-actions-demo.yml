@@ -9,7 +9,7 @@ jobs:
   Setting-Up-Env:
     runs-on: ubuntu-latest
     steps:
-      - name: pulling our git repo 
+      - name: Pulling our git repo from main branch
         uses: actions/checkout@v6
 
       - name: Installing Python 3.13.5
@@ -20,8 +20,14 @@ jobs:
       - name: Upgrade Pip
         run: python -m pip install --upgrade pip
 
-      - name: Installing all dependencies from requirements.txt
+      - name: Installing all Dependencies from requirements.txt
         run: pip install -r requirements.txt
+
+      - name: Installing Pytest
+        run: pip install pytest
+
+      - name: Running Pytest 
+        run: pytest
 
       
 
