@@ -1,20 +1,17 @@
 from fastapi.testclient import TestClient
-import os
 import sqlite3
 import pytest
+from pathlib import Path
 
 from app.main import app
-from app.schemas import UserOut, UserSignup, Token
+from app.schemas import UserOut, UserSignup
 
 from app.config import settings
 from app.db_util import get_db
 
 
-TEST_DB_PATH = os.path.join(
-    # fix this, shouldn't be a absolute path
-    "C:\\Users\\ibrar\\OneDrive\\Desktop\\Api\\Post-Api\\app",
-    f"test_{settings.db_name}",
-)
+BASE_DIR = Path(__file__).resolve().parent  # directory containing this file
+TEST_DB_PATH = BASE_DIR.parent / "app" / f"test_{settings.db_name}"
 
 
 def override_get_db():
