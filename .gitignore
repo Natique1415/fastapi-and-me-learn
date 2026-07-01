@@ -3,3 +3,5 @@ venv/
 .env
 todo.db
 test_todo.db
+pp/__pycache__/main.cpython-313.pyc
+app/routers/__pycache__/posts.cpython-313.pyc
