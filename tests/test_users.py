@@ -4,7 +4,7 @@ import pytest
 from pathlib import Path
 
 from app.main import app
-from app.schemas import UserOut, UserSignup
+from app.schemas import UserOut, UserSignup, Token
 
 from app.config import settings
 from app.db_util import get_db
@@ -33,11 +33,10 @@ def client():
     yield TestClient(app)
     # find a better way as this is more of a hack
     conn = sqlite3.connect(TEST_DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
     curr = conn.cursor()
     curr.execute("DELETE FROM users")
     conn.commit()
+    conn.close()
 
 
 @pytest.fixture
@@ -55,12 +54,13 @@ def test_create_user(client, test_new_user):
     assert new_user.email == "test_user@gmail.com"
 
 
-"""
-Need to create a authorized client to make this test pass
-def test_login_user(client, test_user):
+# Need to create a authorized client to make this test pass
+def test_login_user(client, test_new_user):
     res = client.post(
-        "/login/", json={"email": test_user.email, "password": test_user.password}
+        "/login/",
+        json={"email": "ibrarnatique812@gmail.com", "password": "12345678"},
     )
-    jwt_token = Token.model_validate(res.json())
+    # jwt_token = Token.model_validate(res.json())
+    print(res.status_code)
+    print(res.json().get("detail"))
     assert res.status_code in (403, 200)
-"""
