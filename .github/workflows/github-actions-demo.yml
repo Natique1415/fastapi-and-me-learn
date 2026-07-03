@@ -1,4 +1,4 @@
-name: Build our Code and Run it 
+name: Build our Code and Test it (Pytest)
 
 on:
   push:
