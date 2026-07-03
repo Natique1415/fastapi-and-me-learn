@@ -31,7 +31,7 @@ app.dependency_overrides[get_db] = override_get_db
 @pytest.fixture
 def client():
     yield TestClient(app)
-    # find a better way as this is more a hack
+    # find a better way as this is more of a hack
     conn = sqlite3.connect(TEST_DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
@@ -41,13 +41,14 @@ def client():
 
 
 @pytest.fixture
-def test_user():
+def test_new_user():
     return UserSignup(email="test_user@gmail.com", password="12345678910")
 
 
-def test_create_user(client, test_user):
+def test_create_user(client, test_new_user):
     res = client.post(
-        "/users/", json={"email": test_user.email, "password": test_user.password}
+        "/users/",
+        json={"email": test_new_user.email, "password": test_new_user.password},
     )
     new_user = UserOut.model_validate(res.json())
     assert res.status_code in (201, 409)
