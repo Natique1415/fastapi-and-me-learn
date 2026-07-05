@@ -4,10 +4,11 @@ import pytest
 from pathlib import Path
 
 from app.main import app
-from app.schemas import UserOut, UserSignup, Token
+from app.schemas import UserOut, UserSignup, Token, UserLogin
 
 from app.config import settings
 from app.db_util import get_db
+from app.security import hash_password
 
 
 BASE_DIR = Path(__file__).resolve().parent  # directory containing this file
@@ -44,6 +45,22 @@ def test_new_user():
     return UserSignup(email="test_user@gmail.com", password="12345678910")
 
 
+@pytest.fixture
+def test_authorized_user():
+    authorized_user = UserLogin(email="test_user@gmail.com", password="12345678")
+    conn = sqlite3.connect(TEST_DB_PATH)
+    curr = conn.cursor()
+    try:
+        curr.execute(
+            "INSERT INTO users(email,password_hash) VALUES(?,?)",
+            (authorized_user.email, hash_password(authorized_user.password)),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+        return authorized_user
+
+
 def test_create_user(client, test_new_user):
     res = client.post(
         "/users/",
@@ -55,12 +72,14 @@ def test_create_user(client, test_new_user):
 
 
 # Need to create a authorized client to make this test pass
-def test_login_user(client, test_new_user):
+def test_login_user(client, test_authorized_user):
     res = client.post(
         "/login/",
-        json={"email": "ibrarnatique812@gmail.com", "password": "12345678"},
+        json={
+            "email": test_authorized_user.email,
+            "password": test_authorized_user.password,
+        },
     )
-    # jwt_token = Token.model_validate(res.json())
-    print(res.status_code)
-    print(res.json().get("detail"))
+    jwt_token = Token.model_validate(res.json())
     assert res.status_code in (403, 200)
+    assert jwt_token.token_type == "bearer"

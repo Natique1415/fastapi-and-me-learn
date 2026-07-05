@@ -2,7 +2,8 @@ from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from app.schemas import PayloadData
 from datetime import datetime, timedelta, timezone
-from jose import jwt, JWTError
+
+import jwt
 from app.config import settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -27,7 +28,7 @@ def verify_access_token(
     token: str, credentials_exception: HTTPException
 ) -> PayloadData:
     try:
-        payload = jwt.decode(token, SECRET_KEY, ALGORITHM)
+        payload = jwt.decode(token, SECRET_KEY, [ALGORITHM])
         user_id = payload.get(
             "user_id"
         )  # user id is int based on the pydantic model and the output of the get id in the db util
@@ -37,7 +38,7 @@ def verify_access_token(
 
         return PayloadData(id=user_id)
 
-    except JWTError:
+    except jwt.exceptions.DecodeError:
         raise credentials_exception
 
 
