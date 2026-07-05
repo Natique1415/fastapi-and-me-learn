@@ -1,5 +1,6 @@
 import sqlite3
 import os
+from typing import Generator
 from app.config import settings
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -8,7 +9,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, settings.db_name)
 
 
-def get_db():
+def get_db() -> Generator[sqlite3.Connection, None, None]:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")

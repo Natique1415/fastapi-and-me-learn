@@ -6,11 +6,11 @@ from app.db_util import get_id, DB_PATH, get_db
 import sqlite3
 
 # in the docs given by fastapi we can category endpoints via tags
-router = APIRouter(prefix="/login", tags=["Authentication"])
+router = APIRouter(tags=["Authentication"])
 
 
 # create a new user
-@router.post("/", status_code=200, response_model=Token)
+@router.post("/login/", status_code=200, response_model=Token)
 def login(user_credential: UserLogin, connection: sqlite3.Connection = Depends(get_db)):
     cursor = connection.cursor()
 

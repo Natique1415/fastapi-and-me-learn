@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS "posts"(
     "created_at" TEXT DEFAULT CURRENT_TIMESTAMP, 
     "no_of_likes" INTEGER DEFAULT 0 CHECK("no_of_likes" >= 0),
     FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE SET NULL 
- );
+);
 
 
 CREATE TABLE IF NOT EXISTS "users"( 
