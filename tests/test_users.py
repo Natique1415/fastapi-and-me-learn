@@ -1,10 +1,11 @@
 from fastapi.testclient import TestClient
 import sqlite3
 import pytest
+import jwt
 from pathlib import Path
 
 from app.main import app
-from app.schemas import UserOut, UserSignup, Token, UserLogin
+from app.schemas import UserOut, UserSignup, Token
 
 from app.config import settings
 from app.db_util import get_db
@@ -47,14 +48,16 @@ def test_new_user():
 
 @pytest.fixture
 def test_authorized_user():
-    authorized_user = UserLogin(email="test_user@gmail.com", password="12345678")
+    authorized_user = {"email": "test_user@gmail.com", "password": "12345678"}
     conn = sqlite3.connect(TEST_DB_PATH)
     curr = conn.cursor()
     try:
         curr.execute(
-            "INSERT INTO users(email,password_hash) VALUES(?,?)",
-            (authorized_user.email, hash_password(authorized_user.password)),
+            "INSERT INTO users(email,password_hash) VALUES(?,?) RETURNING id",
+            (authorized_user["email"], hash_password(authorized_user["password"])),
         )
+        user_info = curr.fetchone()
+        authorized_user["user_id"] = user_info[0]
         conn.commit()
     finally:
         conn.close()
@@ -76,10 +79,14 @@ def test_login_user(client, test_authorized_user):
     res = client.post(
         "/login/",
         json={
-            "email": test_authorized_user.email,
-            "password": test_authorized_user.password,
+            "email": test_authorized_user["email"],
+            "password": test_authorized_user["password"],
         },
     )
     jwt_token = Token.model_validate(res.json())
+    payload = jwt.decode(
+        jwt_token.access_token, settings.secret_key, [settings.algorithm]
+    )
+    assert payload.get("user_id") == test_authorized_user["user_id"]
     assert res.status_code in (403, 200)
     assert jwt_token.token_type == "bearer"
