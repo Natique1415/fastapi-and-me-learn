@@ -47,7 +47,7 @@ def test_new_user():
 
 
 @pytest.fixture
-def test_authorized_user(client):
+def test_authorized_user():
     authorized_user = {"email": "test_user@gmail.com", "password": "12345678"}
     conn = sqlite3.connect(TEST_DB_PATH)
     curr = conn.cursor()
@@ -62,6 +62,58 @@ def test_authorized_user(client):
     finally:
         conn.close()
         return authorized_user
+
+
+"""
+Create a fixture which inserts bunch of posts into TEST_DB with the user_id from the authorized user an then use those for further 
+tests in test_post.py
+"""
+
+
+@pytest.fixture
+def test_post(test_authorized_user):
+    conn = sqlite3.connect(TEST_DB_PATH)
+    curr = conn.cursor()
+    posts_data = [
+        {
+            "title": "1st title",
+            "content": "first content",
+            "user_id": test_authorized_user["user_id"],
+        },
+        {
+            "title": "2nd title",
+            "content": "2nd content",
+            "user_id": test_authorized_user["user_id"],
+        },
+        {
+            "title": "3rd title",
+            "content": "3rd content",
+            "user_id": test_authorized_user["user_id"],
+        },
+        {
+            "title": "3rd title",
+            "content": "3rd content",
+            "user_id": test_authorized_user["user_id"],
+        },
+    ]
+
+    try:
+        for post in posts_data:
+            curr.execute(
+                "INSERT INTO posts(title,content,user_id) VALUES(?,?,?) RETURNING id",
+                (
+                    post["title"],
+                    post["content"],
+                    post["user_id"],
+                ),
+            )
+            post_id = curr.fetchone()
+            post["post_id"] = post_id[0]
+        conn.commit()
+
+    finally:
+        conn.close()
+        return posts_data
 
 
 @pytest.fixture

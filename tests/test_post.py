@@ -1,5 +1,4 @@
 from app.schemas import Post
-from pydantic import ValidationError
 import pytest
 
 
@@ -13,13 +12,21 @@ def test_get_posts(client):
     """
 
 
-def test_latest_post(client):
+def test_latest_post_when_post_present(client, test_post):
     res = client.get("/posts/latest")
-    assert res.status_code in (404, 200)
-    try:
-        latest_post = Post.model_validate(res.json())
-    except ValidationError as _:
-        ...
+    assert res.status_code == 200
+    Post.model_validate(res.json())
+
+
+def test_latest_post_when_no_post_present(client):
+    res = client.get("/posts/latest")
+    assert res.status_code == 404
+
+
+def test_get_one_not_exit_post(client):
+    res = client.get(f"/posts/{1000}")
+    assert res.status_code == 404
+    assert res.json().get("detail") == f"Given Post Id = {1000} Does not exist"
 
 
 @pytest.mark.parametrize(
@@ -45,6 +52,13 @@ def test_create_post(
     assert created_post.content == content
     assert created_post.user_id == test_authorized_user["user_id"]
     assert created_post.is_published == is_published
+    assert created_post.no_of_likes == 0
+
+
+def test_get_one_valid_post(client, test_post):
+    res = client.get(f"/posts/{test_post[0]['post_id']}")
+    assert res.status_code == 200
+    Post.model_validate(res.json())
 
 
 def test_unauthorized_create_post(client):
