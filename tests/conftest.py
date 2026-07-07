@@ -9,6 +9,7 @@ from app.schemas import UserSignup
 from app.config import settings
 from app.db_util import get_db
 from app.security import hash_password
+from app.oauth2 import create_access_token
 
 
 BASE_DIR = Path(__file__).resolve().parent  # directory containing this file
@@ -34,6 +35,8 @@ def client():
     conn = sqlite3.connect(TEST_DB_PATH)
     curr = conn.cursor()
     curr.execute("DELETE FROM users")
+    curr.execute("DELETE FROM posts")
+    curr.execute("DELETE FROM likes")
     conn.commit()
     conn.close()
 
@@ -44,7 +47,7 @@ def test_new_user():
 
 
 @pytest.fixture
-def test_authorized_user():
+def test_authorized_user(client):
     authorized_user = {"email": "test_user@gmail.com", "password": "12345678"}
     conn = sqlite3.connect(TEST_DB_PATH)
     curr = conn.cursor()
@@ -61,3 +64,12 @@ def test_authorized_user():
         return authorized_user
 
 
+@pytest.fixture
+def token(test_authorized_user):
+    return create_access_token(payload={"user_id": test_authorized_user["user_id"]})
+
+
+@pytest.fixture
+def authorized_client(client, token):
+    client.headers = {**client.headers, "Authorization": f"Bearer {token}"}
+    return client

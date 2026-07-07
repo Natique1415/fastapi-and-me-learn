@@ -55,7 +55,9 @@ def get_posts(
 
 
 @router.get("/latest", status_code=200, response_model=Post)
-def get_latest_post(connection: sqlite3.Connection = Depends(get_db)):
+def get_latest_post(
+    connection: sqlite3.Connection = Depends(get_db),
+):
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM posts ORDER BY id DESC LIMIT 1")
     posts = cursor.fetchall()
