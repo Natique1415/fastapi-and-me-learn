@@ -41,3 +41,15 @@ def test_incorrect_password_login(client, test_authorized_user):
     )
     assert res.status_code == 403
     assert res.json().get("detail") == "Invalid Password for the given email"
+
+
+def test_non_existent_account_login(client):
+    res = client.post(
+        "/login/",
+        json={
+            "email": "random@gmail.com",
+            "password": "randompassword",
+        },
+    )
+    assert res.status_code == 403
+    assert res.json().get("detail") == "Given Email does not exist"
