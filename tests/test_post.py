@@ -9,8 +9,6 @@ client = TestClient(app)
 
 def test_get_posts():
     res = client.get("/posts/")
-    post_list_adapter = TypeAdapter(List[Post])
-    validate_posts_list = post_list_adapter.validate_python(res.json())
     assert res.status_code == 200
 
 

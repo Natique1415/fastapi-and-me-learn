@@ -1,67 +1,6 @@
-from fastapi.testclient import TestClient
-import sqlite3
-import pytest
 import jwt
-from pathlib import Path
-
-from app.main import app
-from app.schemas import UserOut, UserSignup, Token
-
+from app.schemas import UserOut, Token
 from app.config import settings
-from app.db_util import get_db
-from app.security import hash_password
-
-
-BASE_DIR = Path(__file__).resolve().parent  # directory containing this file
-TEST_DB_PATH = BASE_DIR.parent / "app" / f"test_{settings.db_name}"
-
-
-def override_get_db():
-    conn = sqlite3.connect(TEST_DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    try:
-        yield conn
-
-    finally:
-        conn.close()
-
-
-app.dependency_overrides[get_db] = override_get_db
-
-
-@pytest.fixture
-def client():
-    yield TestClient(app)
-    # find a better way as this is more of a hack
-    conn = sqlite3.connect(TEST_DB_PATH)
-    curr = conn.cursor()
-    curr.execute("DELETE FROM users")
-    conn.commit()
-    conn.close()
-
-
-@pytest.fixture
-def test_new_user():
-    return UserSignup(email="test_user@gmail.com", password="12345678910")
-
-
-@pytest.fixture
-def test_authorized_user():
-    authorized_user = {"email": "test_user@gmail.com", "password": "12345678"}
-    conn = sqlite3.connect(TEST_DB_PATH)
-    curr = conn.cursor()
-    try:
-        curr.execute(
-            "INSERT INTO users(email,password_hash) VALUES(?,?) RETURNING id",
-            (authorized_user["email"], hash_password(authorized_user["password"])),
-        )
-        user_info = curr.fetchone()
-        authorized_user["user_id"] = user_info[0]
-        conn.commit()
-    finally:
-        conn.close()
-        return authorized_user
 
 
 def test_create_user(client, test_new_user):
@@ -88,5 +27,5 @@ def test_login_user(client, test_authorized_user):
         jwt_token.access_token, settings.secret_key, [settings.algorithm]
     )
     assert payload.get("user_id") == test_authorized_user["user_id"]
-    assert res.status_code in (403, 200)
+    assert res.status_code == 200
     assert jwt_token.token_type == "bearer"
