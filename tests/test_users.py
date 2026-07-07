@@ -29,3 +29,15 @@ def test_login_user(client, test_authorized_user):
     assert payload.get("user_id") == test_authorized_user["user_id"]
     assert res.status_code == 200
     assert jwt_token.token_type == "bearer"
+
+
+def test_incorrect_password_login(client, test_authorized_user):
+    res = client.post(
+        "/login/",
+        json={
+            "email": test_authorized_user["email"],
+            "password": "wrong_password",
+        },
+    )
+    assert res.status_code == 403
+    assert res.json().get("detail") == "Invalid Password for the given email"
