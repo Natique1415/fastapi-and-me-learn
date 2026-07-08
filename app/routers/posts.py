@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import HTTPException, APIRouter, Depends
 from app.schemas import PostBase, UpdatePost, Post
 from app.db_util import DB_PATH, does_id_exist, get_db
@@ -10,7 +11,7 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 
 
 # return all posts
-@router.get("/", status_code=200)  # response_model=List[Post])
+@router.get("/", status_code=200, response_model=List[Post])
 def get_posts(
     limit: int = 10,
     skip: int = 0,
@@ -36,22 +37,22 @@ def get_posts(
             ),
         )
     posts = cursor.fetchall()
-    """
     all_posts = []
+
     for post in posts:
         all_posts.append(
             Post(
-                user_id=post[0]["user_id"],
-                post_id=post[0]["id"],
-                title=post[0]["title"],
-                content=post[0]["content"],
-                is_published=True if post[0]["is_published"] == 1 else False,
-                created_at=post[0]["created_at"],
-                no_of_likes=post[0]["no_of_likes"],
+                post_id=post["id"],
+                user_id=post["user_id"],
+                title=post["title"],
+                content=post["content"],
+                is_published=True if post["is_published"] == 1 else False,
+                created_at=posts[0]["created_at"],
+                no_of_likes=posts[0]["no_of_likes"],
             )
         )
-    """
-    return posts
+
+    return all_posts
 
 
 @router.get("/latest", status_code=200, response_model=Post)

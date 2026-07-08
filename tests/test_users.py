@@ -14,28 +14,28 @@ def test_create_user(client, test_new_user):
 
 
 # Need to create a authorized client to make this test pass
-def test_login_user(client, test_authorized_user):
+def test_login_user(client, test_signed_in_user):
     res = client.post(
         "/login/",
         json={
-            "email": test_authorized_user["email"],
-            "password": test_authorized_user["password"],
+            "email": test_signed_in_user["email"],
+            "password": test_signed_in_user["password"],
         },
     )
     jwt_token = Token.model_validate(res.json())
     payload = jwt.decode(
         jwt_token.access_token, settings.secret_key, [settings.algorithm]
     )
-    assert payload.get("user_id") == test_authorized_user["user_id"]
+    assert payload.get("user_id") == test_signed_in_user["user_id"]
     assert res.status_code == 200
     assert jwt_token.token_type == "bearer"
 
 
-def test_incorrect_password_login(client, test_authorized_user):
+def test_incorrect_password_login(client, test_signed_in_user):
     res = client.post(
         "/login/",
         json={
-            "email": test_authorized_user["email"],
+            "email": test_signed_in_user["email"],
             "password": "wrong_password",
         },
     )
