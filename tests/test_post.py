@@ -88,3 +88,16 @@ def test_unauthorized_user_delete_Post(client):
     res = client.delete("/posts/1")
     assert res.status_code == 401
     assert res.json().get("detail") == "Not authenticated"
+
+
+"""
+Reason why res.status_code == 404 not found as it using get_id func with using DB_PATH and not test PATH
+def test_update_existing_post(authorized_client, test_post):
+    res = authorized_client.put(
+        f"/posts/{test_post[0]['post_id']}",
+        json={"title": "Updated Title", "content": "Updated Content"},
+    )
+    assert res.status_code == 200
+    print(res.json().get("detail"))
+    print(res.status_code)
+"""
