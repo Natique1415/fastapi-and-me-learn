@@ -6,6 +6,8 @@ class Settings(BaseSettings):
     algorithm: str
     access_token_expire_minutes: float
     db_name: str
+    redis_url: str
+    cache_ttl: int
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 

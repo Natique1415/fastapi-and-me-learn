@@ -23,6 +23,7 @@ def test_latest_post_when_no_post_present(client):
 
 
 def test_get_one_not_exist_post(client):
+    # CAUSE OF ERROR: redis_client need to be intilaized for client argument as well
     res = client.get(f"/posts/{1000}")
     assert res.status_code == 404
     assert res.json().get("detail") == f"Given Post Id = {1000} Does not exist"

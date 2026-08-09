@@ -1,10 +1,12 @@
+import sqlite3
 from typing import List
 from fastapi import HTTPException, APIRouter, Depends
-from app.schemas import PostBase, UpdatePost, Post
+from redis.asyncio.client import Redis
+from app.schemas import PostBase, UpdatePost, Post, PayloadData
 from app.db_util import DB_PATH, does_id_exist, get_db
-from app.schemas import PayloadData
+from app.config import settings
+from app.main import get_redis
 import app.oauth2
-import sqlite3
 
 # since all endpoint start from posts instead of re-writing all the time we can just do prefix
 router = APIRouter(prefix="/posts", tags=["Posts"])
@@ -76,10 +78,18 @@ def get_latest_post(
 
 
 @router.get("/{post_id}", status_code=200, response_model=Post)
-def get_post(
+async def get_post(
     post_id: int,
     connection: sqlite3.Connection = Depends(get_db),
+    redis_client: Redis = Depends(get_redis),
 ):
+    cache_key = f"post:{post_id}"
+    cached_post = await redis_client.get(cache_key)
+    if cached_post:
+        print("Cache hit!!!")
+        return Post.model_validate_json(cached_post)
+
+    # in the case of cache miss
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
     posts = cursor.fetchall()
@@ -88,7 +98,7 @@ def get_post(
             status_code=404, detail=f"Given Post Id = {post_id} Does not exist"
         )
 
-    return Post(
+    post_data = Post(
         user_id=posts[0]["user_id"],
         post_id=posts[0]["id"],
         title=posts[0]["title"],
@@ -97,6 +107,9 @@ def get_post(
         created_at=posts[0]["created_at"],
         no_of_likes=posts[0]["no_of_likes"],
     )
+    serialized_post = post_data.model_dump_json()
+    await redis_client.set(cache_key, serialized_post, ex=settings.cache_ttl)
+    return post_data
 
 
 @router.post("/", status_code=201, response_model=Post)

@@ -1,11 +1,12 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from .routers import likes, posts, users, auth
-from .db_util import DB_PATH
-from contextlib import asynccontextmanager
 import os
 import sqlite3
-
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+from .config import settings
+from .db_util import DB_PATH
+import redis.asyncio as redis
+from redis.asyncio.client import Redis
 
 # as of now will be present in the same level as this file ( main.py )
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -13,7 +14,6 @@ SCHEMA_FILE = os.path.join(BASE_DIR, "schema.sql")
 
 
 def init_db() -> None:
-    # Ensure the schema file actually exists before trying to read it
     if not os.path.exists(SCHEMA_FILE):
         print(f"️ Warning: Schema file '{SCHEMA_FILE}' not found!")
         return
@@ -29,7 +29,6 @@ def init_db() -> None:
         with open(SCHEMA_FILE, "r") as f:
             schema_script = f.read()
 
-        # executescript runs everything and handles the transaction
         cursor.executescript(schema_script)
         print("Database schema initialized successfully.")
     except Exception as e:
@@ -40,14 +39,26 @@ def init_db() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # This runs BEFORE the server starts accepting requests
     init_db()
+
+    app.state.redis = redis.from_url(
+        settings.redis_url, encoding="utf-8", decode_responses=True
+    )
+
     yield
+
+    await app.state.redis.close()
 
 
 # Get(read), Post(create), Put(update), Delete
 app = FastAPI(lifespan=lifespan)
 
+
+async def get_redis() -> Redis:
+    return app.state.redis
+
+
+from .routers import likes, posts, users, auth  # noqa: E402
 
 # Security Nightmare, need to be more granular
 origins = ["*"]

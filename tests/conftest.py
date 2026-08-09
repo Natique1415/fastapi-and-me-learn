@@ -19,7 +19,7 @@ TEST_DB_PATH = BASE_DIR.parent / "app" / f"test_{settings.db_name}"
 @pytest.fixture
 def client():
     def override_get_db():
-        conn = sqlite3.connect(TEST_DB_PATH)
+        conn = sqlite3.connect(TEST_DB_PATH, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
         try:
