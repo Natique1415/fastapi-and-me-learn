@@ -5,7 +5,7 @@ from redis.asyncio.client import Redis
 from app.schemas import PostBase, UpdatePost, Post, PayloadData
 from app.db_util import DB_PATH, does_id_exist, get_db
 from app.config import settings
-from app.main import get_redis
+from app.redis_util import get_redis
 import app.oauth2
 
 # since all endpoint start from posts instead of re-writing all the time we can just do prefix
@@ -86,7 +86,6 @@ async def get_post(
     cache_key = f"post:{post_id}"
     cached_post = await redis_client.get(cache_key)
     if cached_post:
-        print("Cache hit!!!")
         return Post.model_validate_json(cached_post)
 
     # in the case of cache miss

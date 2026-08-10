@@ -1,6 +1,8 @@
 services:
   api:
     build: .
+    depends_on:
+      - redis
     ports:
       # <port on localhost>:<port on container, can figure out from Dockerfile>
       - "8000:8000"
@@ -10,3 +12,9 @@ services:
 
     env_file:
       - ./.env
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+  

@@ -1,12 +1,13 @@
 import os
 import sqlite3
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from .config import settings
 from .db_util import DB_PATH
 import redis.asyncio as redis
-from redis.asyncio.client import Redis
+from .routers import likes, posts, users, auth
 
 # as of now will be present in the same level as this file ( main.py )
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -15,24 +16,23 @@ SCHEMA_FILE = os.path.join(BASE_DIR, "schema.sql")
 
 def init_db() -> None:
     if not os.path.exists(SCHEMA_FILE):
-        print(f"️ Warning: Schema file '{SCHEMA_FILE}' not found!")
+        logging.error(f"️Schema file '{SCHEMA_FILE}' not found!")
         return
 
     if not os.path.exists(DB_PATH):
-        print(f"️ Warning: sqlite db with path:{DB_PATH} not found!")
+        logging.warning(f"️sqlite db with path:{DB_PATH} not found!")
         return
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     try:
-        print("Initializing database schema...")
         with open(SCHEMA_FILE, "r") as f:
             schema_script = f.read()
 
         cursor.executescript(schema_script)
-        print("Database schema initialized successfully.")
+        logging.info("Database schema initialized successfully.")
     except Exception as e:
-        print(f"Error initializing database: {e}")
+        logging.error(f"Error initializing database: {e}")
     finally:
         conn.close()
 
@@ -53,12 +53,11 @@ async def lifespan(app: FastAPI):
 # Get(read), Post(create), Put(update), Delete
 app = FastAPI(lifespan=lifespan)
 
-
+"""
 async def get_redis() -> Redis:
     return app.state.redis
+    """
 
-
-from .routers import likes, posts, users, auth  # noqa: E402
 
 # Security Nightmare, need to be more granular
 origins = ["*"]
