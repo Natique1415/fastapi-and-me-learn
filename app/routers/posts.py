@@ -108,7 +108,7 @@ async def get_post(
         no_of_likes=posts[0]["no_of_likes"],
     )
     serialized_post = post_data.model_dump_json()
-    await redis_client.set(cache_key, serialized_post, ex=settings.cache_ttl)
+    await redis_client.set(cache_key, serialized_post, ex=settings.cache_ttl_sec)
     return post_data
 
 
